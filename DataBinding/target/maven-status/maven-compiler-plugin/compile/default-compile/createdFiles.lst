@@ -1,0 +1,8 @@
+model\Model.class
+presenter\Presenter.class
+binding\Observable.class
+binding\Observer.class
+binding\OneWayBinding.class
+binding\TwoWayBinding.class
+view\View.class
+main\Main.class
