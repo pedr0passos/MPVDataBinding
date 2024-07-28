@@ -54,6 +54,7 @@ public class OneWayBinding implements Observer {
     private final Observable model;
     private final Observable view;
     private final boolean modelToView;
+    private boolean atualizou = false;
     
     public OneWayBinding(Observable model, Observable view, boolean modelToView) {
         this.model = model;
@@ -64,10 +65,18 @@ public class OneWayBinding implements Observer {
 
     @Override
     public void update() {
-        if (modelToView && model instanceof Model && view instanceof View) 
-            ((View) view).updateFromModel(((Model) model).getData());
-        else if (!modelToView && model instanceof View && view instanceof Model) 
-            ((Model) view).updateFromView(((View) model).getData());
+        
+        if (atualizou) return;
+        
+        try {
+            atualizou = true;
+            if (modelToView && model instanceof Model && view instanceof View) 
+                ((View) view).setData(((Model) model).getData());
+            else if (!modelToView && model instanceof View && view instanceof Model) 
+                ((Model) view).setData(((View) model).getData());
+        } finally {
+            atualizou = false;
+        }
     }
 }
 ```
@@ -94,8 +103,8 @@ public class TwoWayBinding implements Observer {
 
     @Override
     public void update() {
-        view.updateFromModel(model.getData());
-        model.updateFromView(view.getData());
+        view.setData(model.getData());
+        model.setData(view.getData());
     }
 }
 ```
@@ -105,15 +114,28 @@ public class TwoWayBinding implements Observer {
 
 ## Exemplo de Uso
 
-### Binding Unidirecional
+### Binding Unidirecional - Visão Atualizada a partir da Model
 
 ```java
 Model model = new Model();
 View view = new View();
-OneWayBinding binding = new OneWayBinding(model, view, true);
+Presenter presenter = new Presenter(model, view);
 
-// Quando o modelo é atualizado, a visão também será atualizada automaticamente.
-model.setData("Novos dados");
+presenter.bindOneWayModelToView();
+model.setData("Hello, World!");
+System.out.println(view.getData()); // Deve exibir "Hello, World!"
+```
+
+### Binding Unidirecional - Model Atualizada a partir da View
+
+```java
+Model model = new Model();
+View view = new View();
+Presenter presenter = new Presenter(model, view);
+
+presenter.bindOneWayViewToModel();
+view.setData("Hello, Java!");
+System.out.println(model.getData()); // Deve exibir "Hello, Java!"
 ```
 
 ### Binding Bidirecional
@@ -121,10 +143,12 @@ model.setData("Novos dados");
 ```java
 Model model = new Model();
 View view = new View();
-TwoWayBinding binding = new TwoWayBinding(model, view);
+Presenter presenter = new Presenter(model, view);
 
-// Quando o modelo ou a visão são atualizados, ambos são sincronizados automaticamente.
-model.setData("Novos dados");
-view.setData("Novos dados da visão");
+presenter.bindTwoWay();
+view.setData("Hello, Two-Way!");
+System.out.println(model.getData()); // Deve exibir "Hello, Two-Way!"
+model.setData("Hello, Bidirectional!");
+System.out.println(view.getData()); // Deve exibir "Hello, Bidirectional!"
 ```
 
