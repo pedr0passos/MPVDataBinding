@@ -2,7 +2,6 @@ package view;
 
 import binding.Observable;
 import binding.Observer;
-import model.Model;
 import java.util.ArrayList;
 
 public class View implements Observable {
@@ -41,12 +40,6 @@ public class View implements Observable {
     public void notificaObservers() {
         for (Observer observer : observers) {
             observer.update();
-        }
-    }
-
-    public void update(Observable model) {
-        if (model instanceof Model) {
-            this.data = ((Model) model).getData();
         }
     }
 }
