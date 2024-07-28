@@ -1,32 +1,111 @@
-# OneWayBinding
+# Arquitetura e Configuração de Binding com o Padrão Observer
 
-A classe `OneWayBinding` implementa a interface `Observer` e fornece um mecanismo para sincronizar dados de um `Observable` para outro, em uma única direção.
+## Visão Geral
 
-## Construtor
+Este projeto implementa uma arquitetura baseada no padrão Observer, onde os objetos podem ser configurados para observar e reagir a mudanças em outros objetos. Ele suporta tanto bindings unidirecionais quanto bidirecionais entre modelos (`Model`) e visões (`View`).
 
-### `OneWayBinding(Observable model, Observable view, boolean modelToView)`
+## Padrão Observer
 
-Cria uma instância de `OneWayBinding` que sincroniza os dados entre a (`model`) e a (`view`).
+O padrão Observer define uma relação um-para-muitos entre objetos, de modo que quando um objeto muda de estado, todos os seus dependentes são notificados automaticamente. Este padrão é útil para implementar notificações de eventos em sistemas.
 
-- **Parâmetros:**
-  - `model`: O objeto `Observable` que serve como fonte de dados.
-  - `view`: O objeto `Observable` que serve como destino dos dados.
-  - `modelToView`: Um booleano que indica a direção da sincronização dos dados. Se `true`, os dados fluem do `model` para o `view`. Se `false`, os dados fluem do `view` para o `model`.
+### Interfaces Principais
 
-- **Comportamento:**
-  - O construtor adiciona a instância de `OneWayBinding` como um observador ao `model`.
+#### `Observable`
 
-## Métodos
+A interface `Observable` define os métodos que uma classe observável deve implementar:
 
-### `update()`
+```java
+public interface Observable {
+    void addObserver(Observer observer);
+    void removeObserver(Observer observer);
+    void notificaObservers();
+}
+```
 
-Implementa o método `update` da interface `Observer`. Este método é chamado quando o `Observable` observado sofre uma mudança.
+- `addObserver(Observer observer)`: Adiciona um observador à lista de observadores.
+- `removeObserver(Observer observer)`: Remove um observador da lista de observadores.
+- `notificaObservers()`: Notifica todos os observadores sobre uma mudança no estado do objeto.
 
-- **Comportamento:**
-  - Se `modelToView` for `true` e `model` for uma instância de `Model` e `view` for uma instância de `View`, o método chama `updateFromModel` em `view` com os dados obtidos de `model`.
-  - Se `modelToView` for `false` e `model` for uma instância de `View` e `view` for uma instância de `Model`, o método chama `updateFromView` em `view` com os dados obtidos de `model`.
+#### `Observer`
+
+A interface `Observer` define o método que um observador deve implementar:
+
+```java
+public interface Observer {
+    void update();
+} 
+```
+
+- `update()`: Método chamado quando o estado do objeto observado muda.
+
+### Implementação do Padrão
+
+O projeto inclui implementações concretas do padrão Observer através das classes `Model`, `View`, `OneWayBinding` e `TwoWayBinding`.
+
+## Classes de Binding
+
+### `OneWayBinding`
+
+A classe `OneWayBinding` implementa o padrão Observer para suportar binding unidirecional entre um modelo (`Model`) e uma visão (`View`).
+
+```java
+public class OneWayBinding implements Observer {
+    
+    private final Observable model;
+    private final Observable view;
+    private final boolean modelToView;
+    
+    public OneWayBinding(Observable model, Observable view, boolean modelToView) {
+        this.model = model;
+        this.view = view;
+        this.modelToView = modelToView;
+        this.model.addObserver(this);
+    }
+
+    @Override
+    public void update() {
+        if (modelToView && model instanceof Model && view instanceof View) 
+            ((View) view).updateFromModel(((Model) model).getData());
+        else if (!modelToView && model instanceof View && view instanceof Model) 
+            ((Model) view).updateFromView(((View) model).getData());
+    }
+}
+```
+
+- **Construtor:** Cria um binding unidirecional. O parâmetro `modelToView` define a direção do binding.
+- **Método `update()`:** Atualiza a `view` com dados do `model` se `modelToView` for `true`, ou atualiza o `model` com dados da `view` se `modelToView` for `false`.
+
+### `TwoWayBinding`
+
+A classe `TwoWayBinding` implementa o padrão Observer para suportar binding bidirecional entre um modelo (`Model`) e uma visão (`View`).
+
+```java
+public class TwoWayBinding implements Observer {
+    
+    private final Model model;
+    private final View view;
+
+    public TwoWayBinding(Model model, View view) {
+        this.model = model;
+        this.view = view;
+        this.model.addObserver(this);
+        this.view.addObserver(this);
+    }
+
+    @Override
+    public void update() {
+        view.updateFromModel(model.getData());
+        model.updateFromView(view.getData());
+    }
+}
+```
+
+- **Construtor:** Cria um binding bidirecional entre `model` e `view`.
+- **Método `update()`:** Atualiza a `view` com dados do `model` e o `model` com dados da `view`.
 
 ## Exemplo de Uso
+
+### Binding Unidirecional
 
 ```java
 Model model = new Model();
@@ -36,34 +115,8 @@ OneWayBinding binding = new OneWayBinding(model, view, true);
 // Quando o modelo é atualizado, a visão também será atualizada automaticamente.
 model.setData("Novos dados");
 ```
-# TwoWayBinding
 
-A classe `TwoWayBinding` implementa a interface `Observer` e fornece um mecanismo para sincronizar dados entre um `Model` e uma `View` bidirecionalmente.
-
-## Construtor
-
-### `TwoWayBinding(Model model, View view)`
-
-Cria uma instância de `TwoWayBinding` que sincroniza os dados entre o modelo (`model`) e a visão (`view`) em ambas as direções.
-
-- **Parâmetros:**
-  - `model`: O objeto `Model` que serve como uma das fontes e destinos dos dados.
-  - `view`: O objeto `View` que serve como uma das fontes e destinos dos dados.
-
-- **Comportamento:**
-  - O construtor adiciona a instância de `TwoWayBinding` como um observador tanto ao `model` quanto à `view`.
-
-## Métodos
-
-### `update()`
-
-Implementa o método `update` da interface `Observer`. Este método é chamado quando o `Observable` observado sofre uma mudança.
-
-- **Comportamento:**
-  - Atualiza a `view` com os dados do `model` chamando o método `updateFromModel`.
-  - Atualiza o `model` com os dados da `view` chamando o método `updateFromView`.
-
-## Exemplo de Uso
+### Binding Bidirecional
 
 ```java
 Model model = new Model();
@@ -73,4 +126,5 @@ TwoWayBinding binding = new TwoWayBinding(model, view);
 // Quando o modelo ou a visão são atualizados, ambos são sincronizados automaticamente.
 model.setData("Novos dados");
 view.setData("Novos dados da visão");
+```
 
