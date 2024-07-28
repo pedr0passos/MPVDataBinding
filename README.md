@@ -2,6 +2,8 @@
 
 ## Visão Geral
 
+DUPLA: Pedro Henrique Passos Rocha e Catterina Vittorazzi Salvador
+
 Este projeto implementa uma arquitetura baseada no padrão Observer, onde os objetos podem ser configurados para observar e reagir a mudanças em outros objetos. Ele suporta tanto bindings unidirecionais quanto bidirecionais entre modelos (`Model`) e visões (`View`).
 
 ## Padrão Observer
